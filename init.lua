@@ -81,6 +81,20 @@ require("lazy").setup({
 		end,
 	},
 	{
+		"github/copilot.vim",
+		setup = function()
+			require("copilot").setup({
+				filetypes = {
+					forester = function()
+						if string.match(vim.fs.basename(vim.api.nvim_buf_get_name(0)), "^%.tree") then
+							return true
+						end
+					end,
+				},
+			})
+		end,
+	},
+	{
 		"hedyhli/outline.nvim",
 		config = function()
 			vim.keymap.set("n", "<leader>o", "<cmd>Outline<CR>", { desc = "Toggle Outline" })
@@ -809,6 +823,7 @@ cmp.setup({
 		{ name = "nvim_lsp" },
 		{ name = "luasnip" },
 		{ name = "path" },
+		{ name = "forester" },
 	},
 })
 
