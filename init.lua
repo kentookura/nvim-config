@@ -202,18 +202,6 @@ require("lazy").setup({
 	-- Useful plugin to show you pending keybinds.
 	{
 		"folke/which-key.nvim",
-		opts = {
-			defaults = {
-				["<leader>f"] = { name = "+file/find" },
-				["<leader>g"] = { name = "+git" },
-				["<leader>x"] = { name = "+diagnostics" },
-				-- ["<leader>"] = { name = "" },
-				-- ["<leader>"] = { name = "" },
-				-- ["<leader>"] = { name = "" },
-				-- ["<leader>"] = { name = "" },
-				-- ["<leader>"] = { name = "" },
-			},
-		},
 	},
 	{ "folke/todo-comments.nvim", opts = {} },
 	{
@@ -465,6 +453,21 @@ local function live_grep_git_root()
 	end
 end
 
+local wk = require("which-key")
+wk.add({
+	-- document existing key chains
+	{ "<leader>f", desc = "[F]ind" },
+	{ "<leader>c", desc = "[C]ode" },
+	{ "<leader>d", desc = "[D]ocument" },
+	{ "<leader>g", desc = "[G]it" },
+	{ "<leader>h", desc = "Git [H]unk" },
+	{ "<leader>r", desc = "[R]ename" },
+	{ "<leader>s", desc = "[S]earch" },
+	{ "<leader>t", desc = "[T]oggle" },
+	{ "<leader>w", desc = "[W]orkspace" },
+	{ "<leader>x", desc = "Trouble" },
+})
+
 vim.api.nvim_create_user_command("LiveGrepGitRoot", live_grep_git_root, {})
 
 -- See `:help telescope.builtin`
@@ -702,24 +705,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		on_attach(ev.buf)
 	end,
 })
-
--- document existing key chains
-require("which-key").register({
-	["<leader>c"] = { name = "[C]ode", _ = "which_key_ignore" },
-	["<leader>d"] = { name = "[D]ocument", _ = "which_key_ignore" },
-	["<leader>g"] = { name = "[G]it", _ = "which_key_ignore" },
-	["<leader>h"] = { name = "Git [H]unk", _ = "which_key_ignore" },
-	["<leader>r"] = { name = "[R]ename", _ = "which_key_ignore" },
-	["<leader>s"] = { name = "[S]earch", _ = "which_key_ignore" },
-	["<leader>t"] = { name = "[T]oggle", _ = "which_key_ignore" },
-	["<leader>w"] = { name = "[W]orkspace", _ = "which_key_ignore" },
-	["<leader>x"] = { name = "Trouble", _ = "which_key_ignore" },
-})
-
-require("which-key").register({
-	["<leader>"] = { name = "VISUAL <leader>" },
-	["<leader>h"] = { "Git [H]unk" },
-}, { mode = "v" })
 
 require("lspconfig").ocamlls.setup({ cmd = { "ocamllsp" } })
 require("lspconfig").rust_analyzer.setup({})
