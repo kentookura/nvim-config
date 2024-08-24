@@ -80,20 +80,7 @@ require("lazy").setup({
 			})
 		end,
 	},
-	{
-		"github/copilot.vim",
-		setup = function()
-			require("copilot").setup({
-				filetypes = {
-					forester = function()
-						if string.match(vim.fs.basename(vim.api.nvim_buf_get_name(0)), "^%.tree") then
-							return true
-						end
-					end,
-				},
-			})
-		end,
-	},
+	{ "NoahTheDuke/vim-just", ft = { "just" } },
 	{
 		"hedyhli/outline.nvim",
 		config = function()
@@ -158,8 +145,9 @@ require("lazy").setup({
 			vim.g.mapleader = " "
 			vim.keymap.set("n", "<leader>n.", "<cmd>Forester browse<CR>", { silent = true })
 			vim.keymap.set("n", "<leader>nn", "<cmd>Forester new<CR>", { silent = true })
-			vim.keymap.set("i", "<C-t>", "<cmd>Forester transclude<CR>", { silent = true })
-			vim.keymap.set("i", "<C-l>", "<cmd>Forester link<CR>", { silent = true })
+			vim.keymap.set("n", "<leader>nc", "<cmd>Forester config<CR>", { silent = true })
+			vim.keymap.set("i", "<C-t>", "<cmd>Forester transclude_new<CR>", { silent = true })
+			vim.keymap.set("i", "<C-l>", "<cmd>Forester link_new<CR>", { silent = true })
 		end,
 		dependencies = {
 			{ "nvim-treesitter/nvim-treesitter" },
@@ -302,7 +290,7 @@ require("lazy").setup({
 			end,
 		},
 	},
-
+	{ "ElmCast/elm-vim" },
 	{
 		-- Theme inspired by Atom
 		"navarasu/onedark.nvim",
@@ -362,10 +350,16 @@ require("lazy").setup({
 		"stevearc/conform.nvim",
 		opts = {
 			formatters_by_ft = {
+				ocaml = { "ocamlformat" },
+				dune = { "ocamlformat" },
+				lua = { "stylua" },
 				javascript = { { "prettier" } },
 				json = { { "prettier" } },
 				nix = { { "nixfmt" } },
 				rust = { { "rustfmt" } },
+				-- elm = { { "elm-format" } },
+				xml = { { "xmlformat" } },
+				html = { { "prettier" } },
 			},
 		},
 	},
@@ -731,6 +725,7 @@ require("lspconfig").ocamlls.setup({ cmd = { "ocamllsp" } })
 require("lspconfig").rust_analyzer.setup({})
 require("lspconfig").gopls.setup({})
 require("lspconfig").nixd.setup({})
+require("lspconfig").elmls.setup({})
 require("neodev").setup()
 
 require("lspconfig").lua_ls.setup({
@@ -760,19 +755,39 @@ local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require("cmp_nvim_lsp").default_capabilities(capabilities)
 
 require("conform").setup({
-	formatters_by_ft = {
-		ocaml = { "ocamlformat" },
-		dune = { "ocamlformat" },
-		lua = { "stylua" },
-	},
-})
-
-vim.api.nvim_create_autocmd("BufWritePre", {
-	pattern = "*",
-	callback = function(args)
-		require("conform").format({ bufnr = args.buf })
+	format_on_save = function(bufnr)
+		-- Disable with a global or buffer-local variable
+		if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
+			return
+		end
+		return { timeout_ms = 500, lsp_format = "fallback" }
 	end,
 })
+
+vim.api.nvim_create_user_command("FormatDisable", function(args)
+	if args.bang then
+		-- FormatDisable! will disable formatting just for this buffer
+		vim.b.disable_autoformat = true
+	else
+		vim.g.disable_autoformat = true
+	end
+end, {
+	desc = "Disable autoformat-on-save",
+	bang = true,
+})
+vim.api.nvim_create_user_command("FormatEnable", function()
+	vim.b.disable_autoformat = false
+	vim.g.disable_autoformat = false
+end, {
+	desc = "Re-enable autoformat-on-save",
+})
+
+--vim.api.nvim_create_autocmd("BufWritePre", {
+--	pattern = "*",
+--	callback = function(args)
+--		require("conform").format({ bufnr = args.buf })
+--	end,
+--})
 
 -- [[ Configure nvim-cmp ]]
 -- See `:help cmp`
@@ -823,7 +838,8 @@ cmp.setup({
 		{ name = "nvim_lsp" },
 		{ name = "luasnip" },
 		{ name = "path" },
-		{ name = "forester" },
+		-- { name = "forester" },
+		--
 	},
 })
 
