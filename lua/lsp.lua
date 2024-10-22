@@ -103,7 +103,9 @@ require("lspconfig").rust_analyzer.setup({})
 require("lspconfig").gopls.setup({})
 require("lspconfig").nixd.setup({})
 require("lspconfig").elmls.setup({})
-require("neodev").setup()
+require("lspconfig").hls.setup({})
+require("lspconfig").ts_ls.setup({})
+require("lazydev").setup()
 
 require("lspconfig").lua_ls.setup({
 	on_init = function(client)
