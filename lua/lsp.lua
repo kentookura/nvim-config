@@ -85,6 +85,20 @@ vim.api.nvim_create_autocmd("LspAttach", {
 	end,
 })
 
+local configs = require("lspconfig.configs")
+
+if not configs.forester_lsp then
+	configs.forester_lsp = {
+		default_config = {
+			cmd = { "/home/kento/.forester/bin/forester", "lsp" },
+			filetypes = { "forester" },
+			root_dir = vim.fs.root(vim.env.PWD, { "forest.toml" }),
+			settings = {},
+		},
+	}
+end
+
+require("lspconfig").forester_lsp.setup({})
 require("lspconfig").rust_analyzer.setup({})
 require("lspconfig").gopls.setup({})
 require("lspconfig").nixd.setup({})
