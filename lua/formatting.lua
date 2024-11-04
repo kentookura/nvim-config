@@ -1,10 +1,29 @@
 require("conform").setup({
+	formatters_by_ft = {
+		ocaml = { "topiary" },
+		haskell = { "ormolu" },
+		lua = { "stylua" },
+		javascript = { "prettier" },
+		json = { "prettier" },
+		css = { "prettier" },
+		nix = { "nixfmt" },
+		rust = { "rustfmt" },
+		xml = { "xmlformat" },
+		html = { "prettier" },
+	},
+	formatters = {
+		topiary = {
+			command = "topiary",
+			stdin = true,
+			args = { "format", "--language", "ocaml" },
+		},
+	},
 	format_on_save = function(bufnr)
 		-- Disable with a global or buffer-local variable
 		if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
 			return
 		end
-		return { timeout_ms = 500 }
+		return { timeout_ms = 2000 }
 	end,
 })
 

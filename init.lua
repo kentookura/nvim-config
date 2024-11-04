@@ -1,3 +1,5 @@
+require("options")
+
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
@@ -27,90 +29,55 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
-	{
-		"kevinhwang91/nvim-ufo",
-		dependencies = { "kevinhwang91/promise-async" },
-		config = function()
-			local handler = function(virtText, lnum, endLnum, width, truncate)
-				local newVirtText = {}
-				local suffix = (" 󰁂 %d "):format(endLnum - lnum)
-				local sufWidth = vim.fn.strdisplaywidth(suffix)
-				local targetWidth = width - sufWidth
-				local curWidth = 0
-				for _, chunk in ipairs(virtText) do
-					local chunkText = chunk[1]
-					local chunkWidth = vim.fn.strdisplaywidth(chunkText)
-					if targetWidth > curWidth + chunkWidth then
-						table.insert(newVirtText, chunk)
-					else
-						chunkText = truncate(chunkText, targetWidth - curWidth)
-						local hlGroup = chunk[2]
-						table.insert(newVirtText, { chunkText, hlGroup })
-						chunkWidth = vim.fn.strdisplaywidth(chunkText)
-						-- str width returned from truncate() may less than 2nd argument, need padding
-						if curWidth + chunkWidth < targetWidth then
-							suffix = suffix .. (" "):rep(targetWidth - curWidth - chunkWidth)
-						end
-						break
-					end
-					curWidth = curWidth + chunkWidth
-				end
-				table.insert(newVirtText, { suffix, "MoreMsg" })
-				return newVirtText
-			end
-			vim.o.foldcolumn = "0" -- '0' is not bad
-			vim.o.foldlevel = 99 -- Using ufo provider need a large value, feel free to decrease the value
-			vim.o.foldlevelstart = 99
-			vim.o.foldenable = true
 
-			-- Using ufo provider need remap `zR` and `zM`. If Neovim is 0.6.1, remap yourself
-			vim.keymap.set("n", "zR", require("ufo").openAllFolds)
-			vim.keymap.set("n", "zM", require("ufo").closeAllFolds)
-			require("ufo").setup({
-				fold_virt_text_handler = handler,
-				provider_selector = function(bufnr, filetype, buftype)
-					return { "treesitter", "indent" }
-				end,
-			})
+	{ "echasnovski/mini.nvim" },
+
+	{
+		"catppuccin/nvim",
+	},
+	-- 	config = function()
+	-- 		require("catppuccin").setup({ flavour = "latte" })
+	-- 		vim.cmd.colorscheme("catppuccin")
+	-- 	end,
+	-- },
+
+	{
+		"aktersnurra/no-clown-fiesta.nvim",
+		config = function()
+			vim.cmd([[colorscheme no-clown-fiesta]])
+			local scheme = require("no-clown-fiesta.palette")
+			vim.api.nvim_set_hl(0, "LspInlayHint", { fg = scheme.hint })
 		end,
 	},
+
+	{
+		"nvim-treesitter/nvim-treesitter",
+		dependencies = {
+			"nvim-treesitter/nvim-treesitter-textobjects",
+		},
+		build = ":TSUpdate",
+	},
+
+	-- FILETYPES
 	{ "NoahTheDuke/vim-just", ft = { "just" } },
 	{ "ashinkarov/nvim-agda" },
-	{ "ashinkarov/nvim-agda" },
-	{
-		"hedyhli/outline.nvim",
-		config = function()
-			vim.keymap.set("n", "<leader>o", "<cmd>Outline<CR>", { desc = "Toggle Outline" })
-			require("outline").setup({})
-		end,
-	},
+	{ "ElmCast/elm-vim" },
+
 	{
 		"lalitmee/browse.nvim",
 		config = function()
-			require("browse").setup({
-				provider = "google",
-				bookmarks = {
-					["ocaml"] = {
-						["package"] = "https://ocaml.org/p/%s",
-					},
-				},
-			})
+			local browse_utils = require("browse.utils")
+			-- Open the page of opam package on ocaml.org
+			-- TODO: use argument in user command
+			vim.api.nvim_create_user_command("Opam", function()
+				browse_utils.format_search("https://ocaml.org/p/%s", { prompt = "Opam package:" })()
+			end, {})
 		end,
 	},
-	{
-		"folke/flash.nvim",
-		event = "VeryLazy",
-		--@type Flash.Config
-		opts = {},
-	 -- stylua: ignore
-	 keys = {
-	   { "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
-	   { "S", mode = { "n", "x", "o" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
-	   { "r", mode = "o", function() require("flash").remote() end, desc = "Remote Flash" },
-	   { "R", mode = { "o", "x" }, function() require("flash").treesitter_search() end, desc = "Treesitter Search" },
-	   { "<c-s>", mode = { "c" }, function() require("flash").toggle() end, desc = "Toggle Flash Search" },
-	 },
-	},
+
+	-- UI
+
+	{ "nvim-tree/nvim-web-devicons" },
 	{
 		"nvim-neo-tree/neo-tree.nvim",
 		branch = "v3.x",
@@ -118,88 +85,106 @@ require("lazy").setup({
 			"nvim-lua/plenary.nvim",
 			"nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
 			"MunifTanjim/nui.nvim",
-			-- "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
 		},
+	},
+	{
+		"folke/flash.nvim",
+		event = "VeryLazy",
+		opts = {},
+     -- stylua: ignore
+     keys = {
+       { "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
+       { "S", mode = { "n", "x", "o" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
+       { "r", mode = "o", function() require("flash").remote() end, desc = "Remote Flash" },
+       { "R", mode = { "o", "x" }, function() require("flash").treesitter_search() end, desc = "Treesitter Search" },
+       { "<c-s>", mode = { "c" }, function() require("flash").toggle() end, desc = "Toggle Flash Search" },
+     },
 	},
 	{
 		"folke/trouble.nvim",
+		event = "VeryLazy",
+		cmd = "Trouble",
+		opts = {},
 		config = function()
-			-- Lua
+			require("trouble").setup()
+			vim.api.nvim_create_autocmd("QuickFixCmdPost", {
+				callback = function()
+					vim.cmd([[Trouble qflist open]])
+				end,
+			})
 		end,
+		keys = {
+			{
+				"<leader>xx",
+				"<cmd>Trouble diagnostics toggle<cr>",
+				desc = "Diagnostics (Trouble)",
+			},
+		},
 	},
 	{
 		"norcalli/nvim-colorizer.lua",
-		config = function(opts)
-			require("colorizer").setup()
+		event = "VeryLazy",
+		config = function()
+			-- require("colorizer").setup()
 		end,
 	},
-	{ --forester
-		dir = "/home/kento/forester.nvim",
-		-- "kentookura/forester.nvim",
-		config = function(opts)
-			require("forester").setup(opts)
-			vim.g.mapleader = " "
-			vim.keymap.set("n", "<leader>n.", "<cmd>Forester browse<CR>", { silent = true })
-			vim.keymap.set("n", "<leader>nn", "<cmd>Forester new<CR>", { silent = true })
-			vim.keymap.set("n", "<leader>nc", "<cmd>Forester config<CR>", { silent = true })
-			vim.keymap.set("i", "<C-t>", "<cmd>Forester transclude_new<CR>", { silent = true })
-			vim.keymap.set("i", "<C-l>", "<cmd>Forester link_new<CR>", { silent = true })
-		end,
-		dependencies = {
-			{ "nvim-treesitter/nvim-treesitter" },
-			{ "nvim-telescope/telescope.nvim" },
-			{ "nvim-lua/plenary.nvim" },
+
+	{ "NvChad/showkeys", cmd = "ShowkeysToggle" },
+
+	{
+		"chentoast/marks.nvim",
+		event = "VeryLazy",
+		opts = {},
+	},
+	{
+		"nvim-lualine/lualine.nvim",
+		opts = {
+			options = {
+				icons_enabled = true,
+				component_separators = "|",
+				section_separators = "",
+				globalstatus = true,
+			},
 		},
-		opts = { forests = { "~/forest" }, tree_dirs = { "trees" }, conceal = false },
 	},
-	-- Git related plugins
+
+	{
+		"kylechui/nvim-surround",
+		config = function(opts)
+			require("nvim-surround").setup({
+				keymaps = { visual = "z" },
+				surrounds = { ["#"] = {
+					add = function()
+						return { { "#{" }, { "}" } }
+					end,
+				} },
+			})
+		end,
+	},
+	{ "sindrets/diffview.nvim" },
+
+	-- -- Forester
+	-- {
+	-- 	dir = "/home/kento/forester.nvim",
+	-- 	-- "kentookura/forester.nvim",
+	-- 	config = function()
+	-- 		require("forester").setup()
+	-- 		-- require("telescope").load_extension("forester")
+	-- 		vim.g.mapleader = " "
+	-- 		vim.keymap.set("n", "<leader>n.", "<cmd>Forester browse<CR>", { silent = true })
+	-- 		vim.keymap.set("n", "<leader>nn", "<cmd>Forester new<CR>", { silent = true })
+	-- 		vim.keymap.set("n", "<leader>nc", "<cmd>Forester config<CR>", { silent = true })
+	-- 	end,
+	-- 	dependencies = {
+	-- 		{ "nvim-treesitter/nvim-treesitter" },
+	-- 		{ "nvim-telescope/telescope.nvim" },
+	-- 		{ "nvim-lua/plenary.nvim" },
+	-- 	},
+	-- },
+
+	-- Git
 	"tpope/vim-fugitive",
 	"tpope/vim-rhubarb",
-
-	-- Detect tabstop and shiftwidth automatically
-	"tpope/vim-sleuth",
-
-	-- NOTE: This is where your plugins related to LSP can be installed.
-	--  The configuration is done below. Search for lspconfig to find it below.
-	{
-		-- LSP Configuration & Plugins
-		"neovim/nvim-lspconfig",
-		dependencies = {
-			-- Automatically install LSPs to stdpath for neovim
-			-- { "williamboman/mason.nvim", config = true },
-			-- "williamboman/mason-lspconfig.nvim",
-
-			-- Useful status updates for LSP
-			-- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
-			{ "j-hui/fidget.nvim", opts = {} },
-
-			-- Additional lua configuration, makes nvim stuff amazing!
-			"folke/neodev.nvim",
-		},
-	},
-
-	{
-		-- Autocompletion
-		"hrsh7th/nvim-cmp",
-		dependencies = {
-			-- Snippet Engine & its associated nvim-cmp source
-			"L3MON4D3/LuaSnip",
-			"saadparwaiz1/cmp_luasnip",
-
-			-- Adds LSP completion capabilities
-			"hrsh7th/cmp-nvim-lsp",
-			"hrsh7th/cmp-path",
-
-			-- Adds a number of user-friendly snippets
-			"rafamadriz/friendly-snippets",
-		},
-	},
-
-	-- Useful plugin to show you pending keybinds.
-	{
-		"folke/which-key.nvim",
-	},
-	{ "folke/todo-comments.nvim", opts = {} },
 	{
 		-- Adds git related signs to the gutter, as well as utilities for managing changes
 		"lewis6991/gitsigns.nvim",
@@ -211,6 +196,9 @@ require("lazy").setup({
 				delete = { text = "_" },
 				topdelete = { text = "‾" },
 				changedelete = { text = "~" },
+			},
+			preview_config = {
+				border = "none",
 			},
 			on_attach = function(bufnr)
 				local gs = package.loaded.gitsigns
@@ -274,79 +262,138 @@ require("lazy").setup({
 			end,
 		},
 	},
-	{ "ElmCast/elm-vim" },
+
+	-- Detect tabstop and shiftwidth automatically
+	"tpope/vim-sleuth",
+
 	{
-		-- Theme inspired by Atom
-		"navarasu/onedark.nvim",
-		priority = 1000,
+		-- LSP Configuration & Plugins
+		"neovim/nvim-lspconfig",
+		dependencies = {
+			{ "j-hui/fidget.nvim", opts = {} },
+			"folke/lazydev.nvim",
+		},
+	},
+
+	{
+		-- Autocompletion
+		"hrsh7th/nvim-cmp",
+		dependencies = {
+			-- Snippet Engine & its associated nvim-cmp source
+			"L3MON4D3/LuaSnip",
+			"saadparwaiz1/cmp_luasnip",
+
+			-- Adds LSP completion capabilities
+			"hrsh7th/cmp-nvim-lsp",
+			"hrsh7th/cmp-path",
+			"hrsh7th/cmp-buffer",
+
+			-- Adds a number of user-friendly snippets
+			-- "rafamadriz/friendly-snippets",
+		},
+	},
+
+	-- Useful plugin to show you pending keybinds.
+	{ "folke/which-key.nvim" },
+	{ "folke/todo-comments.nvim", opts = {} },
+	{
+		"numToStr/Comment.nvim",
 		config = function()
-			vim.cmd.colorscheme("onedark")
+			require("Comment").setup()
 		end,
 	},
 
 	{
-		"nvim-lualine/lualine.nvim",
-		opts = {
-			options = {
-				icons_enabled = false,
-				theme = "onedark",
-				component_separators = "|",
-				section_separators = "",
-			},
-		},
+		"ibhagwan/fzf-lua",
+		config = function()
+			require("fzf-lua").setup({
+				fzf_colors = false,
+				winopts = {
+					hls = {},
+				},
+			})
+
+			vim.keymap.set("n", "<leader><leader>", require("fzf-lua").blines, { desc = "current [B]uffer" })
+			vim.keymap.set("n", "<leader>sb", require("fzf-lua").buffers, { desc = "[B]uffers" })
+			vim.keymap.set("n", "<leader>sf", require("fzf-lua").files, { desc = "[F]iles" })
+			vim.keymap.set("n", "<leader>sg", require("fzf-lua").live_grep, { desc = "[G]rep" })
+			vim.keymap.set("n", "<leader>sh", require("fzf-lua").help_tags, { desc = "[H]elp tags" })
+			vim.keymap.set(
+				"n",
+				"<leader>ss",
+				require("fzf-lua").lsp_document_symbols,
+				{ desc = "[ ] Find symbols in buffer" }
+			)
+			vim.keymap.set(
+				"n",
+				"<leader>sS",
+				require("fzf-lua").lsp_workspace_symbols,
+				{ desc = "[ ] Find symbols in workspace" }
+			)
+			vim.keymap.set("n", "gd", require("fzf-lua").lsp_definitions, { desc = "[G]oto [D]efinition" })
+			vim.keymap.set("n", "gr", require("fzf-lua").lsp_references, { desc = "[G]oto [R]eferences" })
+			vim.keymap.set("n", "gI", require("fzf-lua").lsp_implementations, { desc = "[G]oto [I]mplementation" })
+			vim.keymap.set("n", "<leader>D", require("fzf-lua").lsp_typedefs, { desc = "Type [D]efinition" })
+			vim.keymap.set(
+				"n",
+				"<leader>ws",
+				require("fzf-lua").lsp_workspace_symbols,
+				{ desc = "[W]orkspace [S]ymbols" }
+			)
+			--
+			-- vim.keymap.set("<leader>ds", require("telescope.builtin").lsp_document_symbols, "[D]ocument [S]ymbols")
+			-- vim.keymap.set("n", "<leader>?", require("telescope.builtin").oldfiles, { desc = "[?] Find recently opened files" })
+			-- vim.keymap.set("n", "<leader>/", function()
+			-- 	-- You can pass additional configuration to telescope to change theme, layout, etc.
+			-- 	require("telescope.builtin").current_buffer_fuzzy_find(require("telescope.themes").get_dropdown({
+			-- 		winblend = 10,
+			-- 		previewer = false,
+			-- 	}))
+			-- end, { desc = "[/] Fuzzily search in current buffer" })
+		end,
 	},
-
-	{ "numToStr/Comment.nvim", opts = {} },
-
 	-- Fuzzy Finder (files, lsp, etc)
 	{
 		"nvim-telescope/telescope.nvim",
-		branch = "0.1.x",
-		dependencies = {
-			"nvim-lua/plenary.nvim",
-			-- Fuzzy Finder Algorithm which requires local dependencies to be built.
-			-- Only load if `make` is available. Make sure you have the system
-			-- requirements installed.
-			{
-				"nvim-telescope/telescope-fzf-native.nvim",
-				-- NOTE: If you are having trouble with this installation,
-				--       refer to the README for telescope-fzf-native for more instructions.
-				build = "make",
-				cond = function()
-					return vim.fn.executable("make") == 1
-				end,
-			},
-		},
 	},
-
 	{
-		-- Highlight, edit, and navigate code
-		"nvim-treesitter/nvim-treesitter",
-		dependencies = {
-			"nvim-treesitter/nvim-treesitter-textobjects",
-		},
-		build = ":TSUpdate",
+		"chrisgrieser/nvim-origami",
+		config = function()
+			require("origami").setup()
+		end,
+	},
+	-- 	branch = "0.1.x",
+	-- 	dependencies = {
+	-- 		"nvim-lua/plenary.nvim",
+	-- 		-- Fuzzy Finder Algorithm which requires local dependencies to be built.
+	-- 		-- Only load if `make` is available. Make sure you have the system
+	-- 		-- requirements installed.
+	-- 		{
+	-- 			"nvim-telescope/telescope-fzf-native.nvim",
+	-- 			-- NOTE: If you are having trouble with this installation,
+	-- 			--       refer to the README for telescope-fzf-native for more instructions.
+	-- 			build = "make",
+	-- 			cond = function()
+	-- 				return vim.fn.executable("make") == 1
+	-- 			end,
+	-- 		},
+	-- 	},
+	-- },
+	{
+		"andreypopp/ocaml.nvim",
+		config = function()
+			require("ocaml")
+		end,
 	},
 
 	{
 		"stevearc/conform.nvim",
-		opts = {
-			formatters_by_ft = {
-				ocaml = { "ocamlformat" },
-				dune = { "ocamlformat" },
-				lua = { "stylua" },
-				javascript = { "prettier" },
-				json = { "prettier" },
-				css = { "prettier" },
-				nix = { "nixfmt" },
-				rust = { "rustfmt" },
-				xml = { "xmlformat" },
-				html = { "prettier" },
-			},
-		},
 	},
 }, {})
 
+-- local foresterCompletionSource = require("forester.completion")
+-- require("cmp").register_source("forester", foresterCompletionSource)
+-- require("cmp").setup.filetype("forester", { sources = { { name = "forester", dup = 0 } } })
 
 vim.diagnostic.config({
 	signs = {
@@ -373,8 +420,6 @@ vim.keymap.set("n", "k", "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = tr
 vim.keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true })
 
 -- Diagnostic keymaps
-vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { desc = "Go to previous diagnostic message" })
-vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { desc = "Go to next diagnostic message" })
 vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, { desc = "Open floating diagnostic message" })
 vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostics list" })
 
@@ -391,9 +436,8 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 	pattern = "*",
 })
 
-require("nvim-web-devicons").setup({ override_by_extension = { ["tree"] = { icon = "🌲" } } })
-
 local wk = require("which-key")
+
 wk.add({
 	-- document existing key chains
 	{ "<leader>f", desc = "[F]ind" },
@@ -405,6 +449,7 @@ wk.add({
 	{ "<leader>s", desc = "[S]earch" },
 	{ "<leader>t", desc = "[T]oggle" },
 	{ "<leader>w", desc = "[W]orkspace" },
+	{ "<leader>n", desc = "[N]otes" },
 	{ "<leader>x", desc = "Trouble" },
 })
 

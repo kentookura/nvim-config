@@ -1,4 +1,6 @@
+-- local theme = require("onedark.palette")
 require("neo-tree").setup({
+	show_separator_on_edge = true, -- boolean
 	close_if_last_window = false, -- Close Neo-tree if it is the last window left in the tab
 	popup_border_style = "NC",
 	enable_git_status = true,
@@ -33,7 +35,7 @@ require("neo-tree").setup({
 		icon = {
 			folder_closed = "",
 			folder_open = "",
-			folder_empty = "ﰊ",
+			folder_empty = "󰉖",
 			-- The next two settings are only a fallback, if you use nvim-web-devicons and configure default icons there
 			-- then these will never be used.
 			default = "*",
@@ -53,14 +55,14 @@ require("neo-tree").setup({
 				-- Change type
 				added = "", -- or "✚", but this is redundant info if you use git_status_colors on the name
 				modified = "", -- or "", but this is redundant info if you use git_status_colors on the name
-				deleted = "✖", -- this can only be used in the git_status source
-				renamed = "󰁕", -- this can only be used in the git_status source
+				deleted = " ✖ ", -- this can only be used in the git_status source
+				renamed = " 󰁕 ", -- this can only be used in the git_status source
 				-- Status type
-				untracked = "",
-				ignored = "",
-				unstaged = "󰄱",
-				staged = "",
-				conflict = "",
+				untracked = " ",
+				ignored = "  ",
+				unstaged = " 󰄱 ",
+				staged = "  ",
+				conflict = "  ",
 			},
 		},
 	},
@@ -79,7 +81,7 @@ require("neo-tree").setup({
 			["<2-LeftMouse>"] = "open",
 			["<cr>"] = "open",
 			["<esc>"] = "revert_preview",
-			["P"] = { "toggle_preview", config = { use_float = true } },
+			["P"] = { "toggle_preview", config = { use_float = true, use_image_nvim = true } },
 			["S"] = "open_split",
 			["s"] = "open_vsplit",
 			-- ["S"] = "split_with_window_picker",
@@ -201,3 +203,8 @@ require("neo-tree").setup({
 		},
 	},
 })
+
+-- vim.cmd("hi NeoTreeNormal guibg = " .. theme.dark.bg0)
+-- vim.cmd("hi NeoTreeNormalNC guibg = " .. theme.dark.bg0)
+-- vim.cmd("hi NeoTreeEndOfBuffer guibg = " .. theme.dark.bg0)
+-- vim: ts=2 sts=2 sw=2 et

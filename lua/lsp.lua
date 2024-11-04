@@ -1,18 +1,13 @@
 vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
-	-- Disable underline, it's very annoying
 	underline = false,
 	virtual_text = true,
-	-- Enable virtual text, override spacing to 4
 	-- virtual_text = {spacing = 4},
-	-- Use a function to dynamically turn signs off
-	-- and on, using buffer local variables
 	signs = true,
 	update_in_insert = false,
 })
 
--- [[ Configure LSP ]]
---  This function gets run when an LSP connects to a particular buffer.
-local on_attach = function(bufnr)
+local on_attach = function(ev)
+	local bufnr = ev.buf
 	-- NOTE: Remember that lua is a real programming language, and as such it is possible
 	-- to define small helper and utility functions so you don't have to repeat yourself
 	-- many times.
@@ -30,13 +25,13 @@ local on_attach = function(bufnr)
 	nmap("<leader>rn", vim.lsp.buf.rename, "[R]e[n]ame")
 	nmap("<leader>ca", vim.lsp.buf.code_action, "[C]ode [A]ction")
 
-	nmap("gd", require("telescope.builtin").lsp_definitions, "[G]oto [D]efinition")
-	nmap("gr", require("telescope.builtin").lsp_references, "[G]oto [R]eferences")
-	nmap("gI", require("telescope.builtin").lsp_implementations, "[G]oto [I]mplementation")
-	nmap("<leader>D", require("telescope.builtin").lsp_type_definitions, "Type [D]efinition")
-	nmap("<leader>ws", require("telescope.builtin").lsp_dynamic_workspace_symbols, "[W]orkspace [S]ymbols")
+	nmap("gd", require("fzf-lua").lsp_definitions, "[G]oto [D]efinition")
+	nmap("gr", require("fzf-lua").lsp_references, "[G]oto [R]eferences")
+	nmap("gI", require("fzf-lua").lsp_implementations, "[G]oto [I]mplementation")
+	nmap("<leader>D", require("fzf-lua").lsp_typedefs, "Type [D]efinition")
+	nmap("<leader>ws", require("fzf-lua").lsp_workspace_symbols, "[W]orkspace [S]ymbols")
 
-	nmap("<leader>ds", require("telescope.builtin").lsp_document_symbols, "[D]ocument [S]ymbols")
+	nmap("<leader>ds", require("fzf-lua").lsp_document_symbols, "[D]ocument [S]ymbols")
 	nmap("gR", function()
 		require("trouble").toggle("lsp_references")
 	end, "[R]eferences")
@@ -56,8 +51,7 @@ local on_attach = function(bufnr)
 		require("trouble").toggle("loclist")
 	end, "[L]oclist")
 
-	-- See `:help K` for why this keymap
-	nmap("K", vim.lsp.buf.hover, "Hover Documentation")
+	nmap("K", vim.lsp.buf.hover, "HoverDocumentation")
 	nmap("<C-k>", vim.lsp.buf.signature_help, "Signature Documentation")
 
 	-- Lesser used LSP functionality
@@ -67,6 +61,12 @@ local on_attach = function(bufnr)
 	nmap("<leader>wl", function()
 		print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
 	end, "[W]orkspace [L]ist Folders")
+
+	if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
+		nmap("<leader>th", function()
+			vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = ev.buf }))
+		end, "[T]oggle Inlay [H]ints")
+	end
 
 	-- Create a command `:Format` local to the LSP buffer
 	vim.api.nvim_buf_create_user_command(bufnr, "Format", function(_)
@@ -80,13 +80,12 @@ end
 
 vim.api.nvim_create_autocmd("LspAttach", {
 	group = vim.api.nvim_create_augroup("UserLspConfig", {}),
-	callback = function(ev)
-		on_attach(ev.buf)
-	end,
+	callback = on_attach,
 })
 
 local configs = require("lspconfig.configs")
 
+vim.filetype.add({ extension = { tree = "forester" } })
 if not configs.forester_lsp then
 	configs.forester_lsp = {
 		default_config = {
