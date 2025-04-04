@@ -1,13 +1,128 @@
-vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
-	underline = false,
-	virtual_text = true,
-	-- virtual_text = {spacing = 4},
-	signs = true,
-	update_in_insert = false,
-})
+vim.lsp.config["luals"] = {
+	cmd = { "lua-language-server" },
+	filetypes = { "lua" },
+	root_markers = {
+		".luarc.json",
+		".luarc.jsonc",
+		".luacheckrc",
+		".stylua.toml",
+		"stylua.toml",
+		"selene.toml",
+		"selene.yml",
+		".git",
+	},
+	settings = {
+		Lua = {
+			runtime = {
+				-- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
+				version = "LuaJIT",
+				-- Setup your lua path
+				path = runtime_path,
+			},
+			diagnostics = {
+				-- Get the language server to recognize the `vim` global
+				globals = { "vim" },
+			},
+			workspace = {
+				-- Make the server aware of Neovim runtime files
+				library = vim.api.nvim_get_runtime_file("", true),
+			},
+			-- Do not send telemetry data containing a randomized but unique identifier
+			telemetry = {
+				enable = false,
+			},
+		},
+	},
+}
 
+vim.lsp.config["vale"] = {
+	cmd = { "vale-ls" },
+	filetypes = { "mail" },
+}
+
+vim.lsp.config["elm"] = {
+	cmd = { "elm-language-server" },
+	filetypes = { "elm" },
+	root_markers = { "elm.json" },
+}
+
+vim.lsp.config["tsserver"] = {
+	cmd = { "typescript-language-server", "--stdio" },
+	filetypes = { "javascript" },
+}
+
+vim.lsp.config["lemminx"] = {
+	cmd = { "lemminx" },
+	filetypes = { "xml", "xslt" },
+}
+
+vim.lsp.config["purescript-language-server"] = {
+	cmd = { "purescript-language-server", "--stdio" },
+	filetypes = { "purescript" },
+}
+
+vim.lsp.config["ocamllsp"] = {
+	cmd = { "ocamllsp" },
+	filetypes = { "ocaml", "ocaml.interface" },
+}
+
+vim.lsp.config["yamllsp"] = {
+	cmd = { "yaml-language-server", "--stdio" },
+	filetypes = { "yaml" },
+}
+
+vim.lsp.config["hls"] = {
+	cmd = { "haskell-language-server-wrapper", "--lsp" },
+	filetypes = { "haskell", "cabal" },
+}
+
+vim.filetype.add({ extension = { tree = "forester" } })
+
+vim.lsp.config["forester-lsp"] = {
+	-- cmd = { "lsp-devtools", "agent", "--", "dune", "exec", "--", "forester", "lsp" },
+	cmd = { "forester", "lsp", "-vvv" },
+	filetypes = { "forester" },
+}
+
+vim.keymap.set("n", "gK", function()
+	local new_config = not vim.diagnostic.config().virtual_lines
+	vim.diagnostic.config({ virtual_lines = new_config })
+end, { desc = "Toggle diagnostic virtual_lines" })
+
+vim.lsp.enable("purescript-language-server")
+vim.lsp.enable("forester-lsp")
+vim.lsp.enable("yamllsp")
+vim.lsp.enable("hls")
+vim.lsp.enable("tsserver")
+vim.lsp.enable("lemminx")
+
+vim.lsp.enable("elm")
+vim.lsp.enable("luals")
+vim.lsp.enable("ocamllsp")
+vim.lsp.enable("vale")
+
+-- vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
+-- 	underline = false,
+-- 	virtual_text = true,
+-- 	-- virtual_text = {spacing = 4},
+-- 	signs = true,
+-- 	update_in_insert = false,
+-- })
+--
+-- vim.lsp.handlers["textDocument/definition"] = function(_, result)
+-- 	if not result or vim.tbl_isempty(result) then
+-- 		print("[LSP] Could not find definition.")
+-- 		return
+-- 	end
+--
+-- 	vim.lsp.util.show_document(result[1], "utf-8", { focus = true })
+-- end
+--
+-- vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "single" })
+--
 local on_attach = function(ev)
 	local bufnr = ev.buf
+	local client = vim.lsp.get_client_by_id(ev.data.client_id)
 	-- NOTE: Remember that lua is a real programming language, and as such it is possible
 	-- to define small helper and utility functions so you don't have to repeat yourself
 	-- many times.
@@ -82,52 +197,3 @@ vim.api.nvim_create_autocmd("LspAttach", {
 	group = vim.api.nvim_create_augroup("UserLspConfig", {}),
 	callback = on_attach,
 })
-
-local configs = require("lspconfig.configs")
-
-vim.filetype.add({ extension = { tree = "forester" } })
-if not configs.forester_lsp then
-	configs.forester_lsp = {
-		default_config = {
-			cmd = { "/home/kento/.forester/bin/forester", "lsp" },
-			filetypes = { "forester" },
-			root_dir = vim.fs.root(vim.env.PWD, { "forest.toml" }),
-			settings = {},
-		},
-	}
-end
-
-require("lspconfig").forester_lsp.setup({})
-require("lspconfig").rust_analyzer.setup({})
-require("lspconfig").gopls.setup({})
-require("lspconfig").nixd.setup({})
-require("lspconfig").elmls.setup({})
-require("lspconfig").hls.setup({})
-require("lspconfig").ts_ls.setup({})
-require("lazydev").setup()
-
-require("lspconfig").lua_ls.setup({
-	on_init = function(client)
-		client.config.settings = vim.tbl_deep_extend("force", client.config.settings, {
-			Lua = {
-				runtime = {
-					version = "LuaJIT",
-				},
-				workspace = {
-					checkThirdParty = false,
-					library = {
-						vim.env.VIMRUNTIME,
-						vim.api.nvim_get_runtime_file("", true),
-						"${3rd}/luv/library",
-						"${3rd}/busted/library",
-					},
-				},
-			},
-		})
-		client.notify("workspace/didChangeConfiguration", { settings = client.config.settings })
-		return true
-	end,
-})
-
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require("cmp_nvim_lsp").default_capabilities(capabilities)

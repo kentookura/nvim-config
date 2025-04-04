@@ -1,6 +1,9 @@
+vim.opt.compatible = false
+vim.opt.title = true
 vim.opt.swapfile = false
 vim.opt.hlsearch = false
 vim.opt.incsearch = true
+vim.opt.autoread = true
 
 vim.wo.number = true
 vim.wo.relativenumber = true
@@ -21,7 +24,7 @@ vim.o.smartcase = true
 
 vim.o.scrolloff = 8
 
-vim.o.fillchars = "eob: "
+vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
 
 vim.wo.signcolumn = "yes"
 vim.o.updatetime = 250

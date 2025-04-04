@@ -1,8 +1,12 @@
 require("conform").setup({
 	formatters_by_ft = {
-		ocaml = { "topiary" },
+		-- ocaml = { "ocamlformat" },
+		ocaml = { "ocaml" },
+		dune = { "dune" },
+		["ocaml.interface"] = { "ocaml-interface" },
 		haskell = { "ormolu" },
 		lua = { "stylua" },
+		purescript = { "purs-tidy" },
 		javascript = { "prettier" },
 		json = { "prettier" },
 		css = { "prettier" },
@@ -12,10 +16,21 @@ require("conform").setup({
 		html = { "prettier" },
 	},
 	formatters = {
-		topiary = {
+		ocaml = {
 			command = "topiary",
 			stdin = true,
 			args = { "format", "--language", "ocaml" },
+		},
+		["ocaml-interface"] = {
+			command = "topiary",
+			stdin = true,
+			args = { "format", "--language", "ocaml-interface" },
+		},
+
+		dune = {
+			command = "dune",
+			stdin = true,
+			args = { "format" },
 		},
 	},
 	format_on_save = function(bufnr)

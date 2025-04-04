@@ -31,24 +31,29 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
 
 	{ "echasnovski/mini.nvim" },
-
 	{
-		"catppuccin/nvim",
-	},
-	-- 	config = function()
-	-- 		require("catppuccin").setup({ flavour = "latte" })
-	-- 		vim.cmd.colorscheme("catppuccin")
-	-- 	end,
-	-- },
-
-	{
-		"aktersnurra/no-clown-fiesta.nvim",
+		"projekt0n/github-nvim-theme",
 		config = function()
-			vim.cmd([[colorscheme no-clown-fiesta]])
-			local scheme = require("no-clown-fiesta.palette")
-			vim.api.nvim_set_hl(0, "LspInlayHint", { fg = scheme.hint })
+			require("github-theme").setup({})
+
+			vim.cmd("colorscheme github_dark_high_contrast")
 		end,
 	},
+
+	-- {
+	-- 	"zenbones-theme/zenbones.nvim",
+	-- 	-- Optionally install Lush. Allows for more configuration or extending the colorscheme
+	-- 	-- If you don't want to install lush, make sure to set g:zenbones_compat = 1
+	-- 	-- In Vim, compat mode is turned on as Lush only works in Neovim.
+	-- 	dependencies = "rktjmp/lush.nvim",
+	-- 	lazy = false,
+	-- 	priority = 1000,
+	-- 	-- you can set set configuration options here
+	-- 	config = function()
+	-- 		vim.g.zenbones_darken_comments = 45
+	-- 		vim.cmd.colorscheme("zenbones")
+	-- 	end,
+	-- },
 
 	{
 		"nvim-treesitter/nvim-treesitter",
@@ -76,17 +81,74 @@ require("lazy").setup({
 	},
 
 	-- UI
+	{
+		"stevearc/oil.nvim",
+		config = function()
+			require("oil").setup({ columns = { "icon" } })
+		end,
+	},
+
+	{
+		"stevearc/quicker.nvim",
+		event = "FileType qf",
+		opts = {},
+		config = function()
+			require("quicker").setup()
+			vim.keymap.set("n", "<leader>q", function()
+				require("quicker").toggle()
+			end, {
+				desc = "Toggle quickfix",
+			})
+			vim.keymap.set("n", "<leader>l", function()
+				require("quicker").toggle({ loclist = true })
+			end, {
+				desc = "Toggle loclist",
+			})
+			require("quicker").setup({
+				keys = {
+					{
+						">",
+						function()
+							require("quicker").expand({ before = 2, after = 2, add_to_existing = true })
+						end,
+						desc = "Expand quickfix context",
+					},
+					{
+						"<",
+						function()
+							require("quicker").collapse()
+						end,
+						desc = "Collapse quickfix context",
+					},
+				},
+			})
+		end,
+	},
+
+	{
+		"hedyhli/outline.nvim",
+		config = function()
+			-- Example mapping to toggle outline
+			vim.keymap.set("n", "<leader>o", "<cmd>Outline<CR>", { desc = "Toggle Outline" })
+
+			require("outline").setup({
+				-- Your setup opts here (leave empty to use defaults)
+			})
+		end,
+	},
 
 	{ "nvim-tree/nvim-web-devicons" },
-	{
-		"nvim-neo-tree/neo-tree.nvim",
-		branch = "v3.x",
-		dependencies = {
-			"nvim-lua/plenary.nvim",
-			"nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
-			"MunifTanjim/nui.nvim",
-		},
-	},
+	--
+	-- {
+	-- 	"nvim-neo-tree/neo-tree.nvim",
+	-- 	branch = "v3.x",
+	-- 	dependencies = {
+	-- 		"nvim-lua/plenary.nvim",
+	-- 		"nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
+	-- 		"MunifTanjim/nui.nvim",
+	-- 	},
+	-- },
+
 	{
 		"folke/flash.nvim",
 		event = "VeryLazy",
@@ -119,6 +181,11 @@ require("lazy").setup({
 				"<cmd>Trouble diagnostics toggle<cr>",
 				desc = "Diagnostics (Trouble)",
 			},
+			{
+				"<leader>cl",
+				"<cmd>Trouble lsp toggle focus=false win.position=right<cr>",
+				desc = "LSP Definitions / references / ... (Trouble)",
+			},
 		},
 	},
 	{
@@ -140,6 +207,7 @@ require("lazy").setup({
 		"nvim-lualine/lualine.nvim",
 		opts = {
 			options = {
+				theme = "github_dark_high_contrast",
 				icons_enabled = true,
 				component_separators = "|",
 				section_separators = "",
@@ -181,6 +249,18 @@ require("lazy").setup({
 	-- 		{ "nvim-lua/plenary.nvim" },
 	-- 	},
 	-- },
+	{
+		"windwp/nvim-autopairs",
+		event = "InsertEnter",
+		config = function()
+			local autopairs = require("nvim-autopairs")
+			autopairs.setup({})
+			autopairs.get_rules("'")[1].not_filetypes = { "ocaml" }
+		end,
+
+		-- use opts = {} for passing setup options
+		-- this is equivalent to setup({}) function
+	},
 
 	-- Git
 	"tpope/vim-fugitive",
@@ -191,12 +271,14 @@ require("lazy").setup({
 		opts = {
 			-- See `:help gitsigns.txt`
 			signs = {
-				add = { text = "+" },
-				change = { text = "~" },
+				add = { text = "┃" },
+				change = { text = "┃" },
 				delete = { text = "_" },
 				topdelete = { text = "‾" },
 				changedelete = { text = "~" },
+				untracked = { text = "┆" },
 			},
+			diff_opts = { ignore_whitespace = false },
 			preview_config = {
 				border = "none",
 			},
@@ -239,6 +321,7 @@ require("lazy").setup({
 					gs.reset_hunk({ vim.fn.line("."), vim.fn.line("v") })
 				end, { desc = "reset git hunk" })
 				-- normal mode
+				map("n", "<leader>gt", gs.toggle_signs, { desc = "toggle git signs" })
 				map("n", "<leader>gs", gs.stage_hunk, { desc = "git stage hunk" })
 				map("n", "<leader>gr", gs.reset_hunk, { desc = "git reset hunk" })
 				map("n", "<leader>gS", gs.stage_buffer, { desc = "git Stage buffer" })
@@ -267,35 +350,67 @@ require("lazy").setup({
 	"tpope/vim-sleuth",
 
 	{
-		-- LSP Configuration & Plugins
-		"neovim/nvim-lspconfig",
-		dependencies = {
-			{ "j-hui/fidget.nvim", opts = {} },
-			"folke/lazydev.nvim",
+		"folke/lazydev.nvim",
+		ft = "lua",
+		opts = {
+			library = { vim.env.VIMRUNTIME, { path = "${3rd}/luv/library", words = { "vim%.uv" } } },
 		},
 	},
 
 	{
-		-- Autocompletion
-		"hrsh7th/nvim-cmp",
-		dependencies = {
-			-- Snippet Engine & its associated nvim-cmp source
-			"L3MON4D3/LuaSnip",
-			"saadparwaiz1/cmp_luasnip",
+		"saghen/blink.cmp",
+		dependencies = "rafamadriz/friendly-snippets",
+		version = "*",
+		---@module 'blink.cmp'
+		---@type blink.cmp.Config
+		completion = { documentation = { auto_show = true }, signature = { enabled = true } },
 
-			-- Adds LSP completion capabilities
-			"hrsh7th/cmp-nvim-lsp",
-			"hrsh7th/cmp-path",
-			"hrsh7th/cmp-buffer",
-
-			-- Adds a number of user-friendly snippets
-			-- "rafamadriz/friendly-snippets",
+		signature = { enable = true },
+		opts = {
+			cmdline = { enabled = true },
+			sources = {
+				-- add lazydev to your completion providers
+				default = { "lazydev", "lsp", "path", "snippets", "buffer" },
+				providers = {
+					lazydev = {
+						name = "LazyDev",
+						module = "lazydev.integrations.blink",
+						-- make lazydev completions top priority (see `:h blink.cmp`)
+						score_offset = 100,
+					},
+				},
+			},
+			keymap = {
+				["<Tab>"] = { "select_next", "fallback" },
+				["<S-Tab>"] = { "select_prev", "fallback" },
+				["<CR>"] = { "accept", "fallback" },
+			},
 		},
 	},
 
+	{ "kevinhwang91/nvim-ufo", dependencies = "kevinhwang91/promise-async" },
+
+	-- {
+	-- 	-- Autocompletion
+	-- 	"hrsh7th/nvim-cmp",
+	-- 	dependencies = {
+	-- 		-- Snippet Engine & its associated nvim-cmp source
+	-- 		"L3MON4D3/LuaSnip",
+	-- 		"saadparwaiz1/cmp_luasnip",
+	--
+	-- 		-- Adds LSP completion capabilities
+	-- 		"hrsh7th/cmp-nvim-lsp",
+	-- 		"hrsh7th/cmp-path",
+	-- 		"hrsh7th/cmp-buffer",
+	--
+	-- 		-- Adds a number of user-friendly snippets
+	-- 		-- "rafamadriz/friendly-snippets",
+	-- 	},
+	-- },
+
 	-- Useful plugin to show you pending keybinds.
 	{ "folke/which-key.nvim" },
-	{ "folke/todo-comments.nvim", opts = {} },
+	{ "folke/todo-comments.nvim" },
 	{
 		"numToStr/Comment.nvim",
 		config = function()
@@ -328,7 +443,13 @@ require("lazy").setup({
 				"n",
 				"<leader>sS",
 				require("fzf-lua").lsp_workspace_symbols,
-				{ desc = "[ ] Find symbols in workspace" }
+				{ desc = "Find [S]ymbols in workspace" }
+			)
+			vim.keymap.set(
+				"n",
+				"<leader>sr",
+				require("fzf-lua").oldfiles,
+				{ desc = "search for [R]ecently opened files" }
 			)
 			vim.keymap.set("n", "gd", require("fzf-lua").lsp_definitions, { desc = "[G]oto [D]efinition" })
 			vim.keymap.set("n", "gr", require("fzf-lua").lsp_references, { desc = "[G]oto [R]eferences" })
@@ -356,12 +477,6 @@ require("lazy").setup({
 	{
 		"nvim-telescope/telescope.nvim",
 	},
-	{
-		"chrisgrieser/nvim-origami",
-		config = function()
-			require("origami").setup()
-		end,
-	},
 	-- 	branch = "0.1.x",
 	-- 	dependencies = {
 	-- 		"nvim-lua/plenary.nvim",
@@ -386,20 +501,16 @@ require("lazy").setup({
 		end,
 	},
 
-	{
-		"stevearc/conform.nvim",
-	},
-}, {})
+	{ "stevearc/conform.nvim" },
 
--- local foresterCompletionSource = require("forester.completion")
--- require("cmp").register_source("forester", foresterCompletionSource)
--- require("cmp").setup.filetype("forester", { sources = { { name = "forester", dup = 0 } } })
+	{ "3rd/image.nvim", build = false },
+}, {})
 
 vim.diagnostic.config({
 	signs = {
 		text = {
-			[vim.diagnostic.severity.ERROR] = " ",
-			[vim.diagnostic.severity.WARN] = " ",
+			[vim.diagnostic.severity.ERROR] = "",
+			[vim.diagnostic.severity.WARN] = "",
 			[vim.diagnostic.severity.HINT] = "󰌶",
 		},
 	},
@@ -422,8 +533,7 @@ vim.keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = tr
 -- Diagnostic keymaps
 vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, { desc = "Open floating diagnostic message" })
 vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostics list" })
-
-vim.cmd([[nnoremap \ :Neotree toggle<cr>]])
+vim.keymap.set("n", "\\", "<CMD>Oil<CR>", { desc = "Open parent directory" })
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
@@ -453,12 +563,48 @@ wk.add({
 	{ "<leader>x", desc = "Trouble" },
 })
 
+local function set_ft_option(ft, option, value)
+	vim.api.nvim_create_autocmd("FileType", {
+		pattern = ft,
+		group = vim.api.nvim_create_augroup("FtOptions", {}),
+		desc = ('set option "%s" to "%s" for this filetype'):format(option, value),
+		callback = function()
+			vim.opt_local[option] = value
+		end,
+	})
+end
+
+set_ft_option({ "dune" }, "suffixesadd", ".ml")
+
+vim.api.nvim_create_user_command("Spdx", function()
+	local filetype = vim.bo.filetype
+	local copyright_text = "SPDX-FileCopyrightText: 2024 The Forester Project Contributors"
+	local license_identifier = "SPDX-License-Identifier: GPL-3.0-or-later"
+	local comment
+	local comment_string
+	if filetype == "dune" then
+		comment_string = {
+			string.format(";;; %s", copyright_text),
+			";;;",
+			string.format(";;; %s", license_identifier),
+		}
+	else
+		if filetype == "ocaml" or "ocaml.interface" then
+			comment_string = {
+				"(*",
+				string.format(" * %s", copyright_text),
+				" *",
+				string.format(" * %s", license_identifier),
+				" *)",
+			}
+		end
+	end
+	vim.api.nvim_buf_set_lines(0, 0, 0, false, comment_string)
+end, {})
+
 require("ocaml")
 require("tree-sitter-config")
-require("completion")
 require("formatting")
-require("filetree")
 require("lsp")
-require("nvim-web-devicons").setup({ override_by_extension = { ["tree"] = { icon = "🌲" } } })
-
+require("fold")
 -- vim: ts=2 sts=2 sw=2 et
