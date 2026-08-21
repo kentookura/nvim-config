@@ -1,0 +1,1 @@
+/home/kento/tree-sitter-forester/queries/indents.scm

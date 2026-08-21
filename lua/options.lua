@@ -1,7 +1,13 @@
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
+
+vim.g.did_install_default_menus = true -- avoid menu.vim (saves ~100ms)
+vim.g.loaded_netrwPlugin = 0 -- disable netrw
+
 vim.opt.compatible = false
 vim.opt.title = true
 vim.opt.swapfile = false
-vim.opt.hlsearch = false
+vim.opt.hlsearch = true
 vim.opt.incsearch = true
 vim.opt.autoread = true
 
@@ -11,9 +17,10 @@ vim.wo.relativenumber = true
 vim.opt.tabstop = 2
 vim.opt.softtabstop = 2
 vim.opt.expandtab = true
+vim.opt.shiftwidth = 2
 
 vim.o.mouse = "a"
-vim.o.clipboard = "unnamed,unnamedplus"
+vim.o.clipboard = "unnamedplus"
 vim.o.breakindent = true
 vim.o.undofile = true
 
@@ -22,14 +29,17 @@ vim.opt.cursorline = true
 vim.o.ignorecase = true
 vim.o.smartcase = true
 
-vim.o.scrolloff = 8
+vim.o.scrolloff = 4
 
 vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
 
 vim.wo.signcolumn = "yes"
 vim.o.updatetime = 250
 vim.o.timeoutlen = 300
-vim.o.completeopt = "menuone,noselect"
+vim.o.complete = ".,o"
+vim.o.completeopt = "fuzzy,menuone,noselect"
+vim.o.autocomplete = true
+vim.o.pumheight = 7
 vim.o.termguicolors = true
 vim.o.cmdheight = 0
 

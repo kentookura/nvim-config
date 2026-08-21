@@ -40,6 +40,11 @@ vim.lsp.config["vale"] = {
 	filetypes = { "mail" },
 }
 
+vim.lsp.config["nix"] = {
+	cmd = { "nixd" },
+	filetypes = { "nix" },
+}
+
 vim.lsp.config["elm"] = {
 	cmd = { "elm-language-server" },
 	filetypes = { "elm" },
@@ -80,14 +85,46 @@ vim.filetype.add({ extension = { tree = "forester" } })
 
 vim.lsp.config["forester-lsp"] = {
 	-- cmd = { "lsp-devtools", "agent", "--", "dune", "exec", "--", "forester", "lsp" },
-	cmd = { "forester", "lsp", "-vvv" },
+	cmd = { "/home/kento/.forester/bin/forester", "lsp", "-vvv", "--port", "8080", "forest.toml" },
 	filetypes = { "forester" },
+	root_markers = { "forest.toml" },
 }
 
-vim.keymap.set("n", "gK", function()
-	local new_config = not vim.diagnostic.config().virtual_lines
-	vim.diagnostic.config({ virtual_lines = new_config })
-end, { desc = "Toggle diagnostic virtual_lines" })
+vim.api.nvim_create_autocmd({ "VimEnter", "DirChanged" }, {
+	callback = function()
+		local root = vim.fs.root(0, "forest.toml")
+		if not root then
+			return
+		end
+		for _, c in ipairs(vim.lsp.get_clients({ name = "forester-lsp" })) do
+			if c.root_dir == root then
+				return
+			end
+		end
+		vim.lsp.start(
+			vim.tbl_extend("force", vim.lsp.config["forester-lsp"], {
+				root_dir = root,
+				cmd_cwd = root,
+			}),
+			{ bufnr = 0 }
+		)
+	end,
+})
+
+vim.lsp.config["rust_analyzer"] = {
+	filetypes = { "rust" },
+	cmd = { "rust-analyzer" },
+	root_markers = { "Cargo.toml", ".git" },
+	single_file_support = true,
+	before_init = function(init_params, config)
+		-- See https://github.com/rust-lang/rust-analyzer/blob/eb5da56d839ae0a9e9f50774fa3eb78eb0964550/docs/dev/lsp-extensions.md?plain=1#L26
+		if config.settings and config.settings["rust-analyzer"] then
+			init_params.initializationOptions = config.settings["rust-analyzer"]
+		end
+	end,
+}
+
+vim.diagnostic.config().virtual_lines = true
 
 vim.lsp.enable("purescript-language-server")
 vim.lsp.enable("forester-lsp")
@@ -100,35 +137,12 @@ vim.lsp.enable("elm")
 vim.lsp.enable("luals")
 vim.lsp.enable("ocamllsp")
 vim.lsp.enable("vale")
+vim.lsp.enable("nix")
+vim.lsp.enable("rust_analyzer")
 
--- vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
--- 	underline = false,
--- 	virtual_text = true,
--- 	-- virtual_text = {spacing = 4},
--- 	signs = true,
--- 	update_in_insert = false,
--- })
---
--- vim.lsp.handlers["textDocument/definition"] = function(_, result)
--- 	if not result or vim.tbl_isempty(result) then
--- 		print("[LSP] Could not find definition.")
--- 		return
--- 	end
---
--- 	vim.lsp.util.show_document(result[1], "utf-8", { focus = true })
--- end
---
--- vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "single" })
---
 local on_attach = function(ev)
 	local bufnr = ev.buf
 	local client = vim.lsp.get_client_by_id(ev.data.client_id)
-	-- NOTE: Remember that lua is a real programming language, and as such it is possible
-	-- to define small helper and utility functions so you don't have to repeat yourself
-	-- many times.
-	--
-	-- In this case, we create a function that lets us more easily define mappings specific
-	-- for LSP related items. It sets the mode, buffer and description for us each time.
 	local nmap = function(keys, func, desc)
 		if desc then
 			desc = "LSP: " .. desc
@@ -147,24 +161,6 @@ local on_attach = function(ev)
 	nmap("<leader>ws", require("fzf-lua").lsp_workspace_symbols, "[W]orkspace [S]ymbols")
 
 	nmap("<leader>ds", require("fzf-lua").lsp_document_symbols, "[D]ocument [S]ymbols")
-	nmap("gR", function()
-		require("trouble").toggle("lsp_references")
-	end, "[R]eferences")
-	nmap("<leader>dd", function()
-		require("trouble").toggle()
-	end, "[D]ocument [D]iagnosics")
-	nmap("<leader>wd", function()
-		require("trouble").toggle("workspace_diagnostics")
-	end, "[W]orkspace [D]iagnosics")
-	nmap("<leader>dd", function()
-		require("trouble").toggle("document_diagnostics")
-	end, "[D]ocument [D]iagnosics")
-	nmap("<leader>dq", function()
-		require("trouble").toggle("quickfix")
-	end, "[Q]uickfix")
-	nmap("<leader>dl", function()
-		require("trouble").toggle("loclist")
-	end, "[L]oclist")
 
 	nmap("K", vim.lsp.buf.hover, "HoverDocumentation")
 	nmap("<C-k>", vim.lsp.buf.signature_help, "Signature Documentation")
@@ -177,7 +173,7 @@ local on_attach = function(ev)
 		print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
 	end, "[W]orkspace [L]ist Folders")
 
-	if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
+	if client then
 		nmap("<leader>th", function()
 			vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = ev.buf }))
 		end, "[T]oggle Inlay [H]ints")
